@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moodboard Studio Pro</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+</head>
+<body>
+    <div id="app">
+        <!-- Auth Section -->
+        <div id="authSection">
+            <div class="auth-container">
+                <h1>🎨 Moodboard Studio Pro</h1>
+                <p>Create beautiful interior design moodboards</p>
+                <div id="authMessage" class="message"></div>
+                <form id="loginForm">
+                    <input type="email" id="loginEmail" placeholder="Email" required>
+                    <input type="password" id="loginPassword" placeholder="Password" required>
+                    <button type="submit" class="btn-primary">Login</button>
+                </form>
+                <div class="divider">or</div>
+                <form id="signupForm">
+                    <input type="email" id="signupEmail" placeholder="Email" required>
+                    <input type="password" id="signupPassword" placeholder="Password (min 6 chars)" required>
+                    <button type="submit" class="btn-secondary">Create Account</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Dashboard -->
+        <div id="dashboardSection" class="hidden">
+            <nav class="navbar">
+                <div class="nav-brand">🎨 Moodboard Studio Pro</div>
+                <div class="nav-actions">
+                    <button id="exportBtn" class="btn-icon" title="Export as PNG">📸</button>
+                    <button id="shareBtn" class="btn-icon" title="Share">🔗</button>
+                    <span id="userEmail" class="user-email"></span>
+                    <button id="logoutBtn" class="btn-outline">Logout</button>
+                </div>
+            </nav>
+
+            <div class="main-container">
+                <!-- Sidebar -->
+                <div class="sidebar">
+                    <div class="sidebar-header">
+                        <h3>🏠 My Rooms</h3>
+                        <button id="createRoomBtn" class="btn-icon">+</button>
+                    </div>
+                    <div id="roomsList" class="rooms-list"></div>
+                    
+                    <div class="sidebar-section">
+                        <h4>✨ Quick Templates</h4>
+                        <button class="template-btn" data-template="modern">🏢 Modern</button>
+                        <button class="template-btn" data-template="bohemian">🌿 Bohemian</button>
+                        <button class="template-btn" data-template="minimalist">⬜ Minimalist</button>
+                        <button class="template-btn" data-template="scandinavian">❄️ Scandinavian</button>
+                    </div>
+                    
+                    <div class="sidebar-section">
+                        <h4>🎨 Color Palette</h4>
+                        <div id="colorPalette" class="color-palette"></div>
+                        <button id="generatePaletteBtn" style="margin-top: 0.5rem; width: 100%;" class="btn-outline">Generate Palette</button>
+                    </div>
+                </div>
+
+                <!-- Moodboard Area -->
+                <div class="moodboard-area">
+                    <div class="moodboard-header">
+                        <div>
+                            <h2 id="selectedRoomTitle">Select a Room</h2>
+                            <p id="roomDescription">Click on a room to start designing</p>
+                        </div>
+                        <button id="addElementBtn" class="btn-primary" disabled>+ Add Element</button>
+                    </div>
+                    <div id="moodboardCanvas" class="moodboard-canvas">
+                        <div class="empty-state">
+                            <div class="empty-icon">🎨</div>
+                            <h3>Select a Room</h3>
+                            <p>Choose a room from the sidebar or create a new one</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Element Modal -->
+    <div id="ideaModal" class="modal">
+        <div class="modal-content">
+            <h3>Add Design Element</h3>
+            
+            <div class="modal-tabs">
+                <button class="tab-btn active" onclick="switchTab('browse')">📦 Browse</button>
+                <button class="tab-btn" onclick="switchTab('ai')">✨ AI Ideas</button>
+                <button class="tab-btn" onclick="switchTab('custom')">🎨 Custom</button>
+            </div>
+            
+            <!-- Browse Tab -->
+            <div id="browseTab" class="tab-content active">
+                <div class="element-categories">
+                    <button class="cat-btn active" onclick="filterElements('all')">All</button>
+                    <button class="cat-btn" onclick="filterElements('furniture')">🪑 Furniture</button>
+                    <button class="cat-btn" onclick="filterElements('color')">🎨 Colors</button>
+                    <button class="cat-btn" onclick="filterElements('lighting')">💡 Lighting</button>
+                    <button class="cat-btn" onclick="filterElements('decor')">✨ Decor</button>
+                    <button class="cat-btn" onclick="filterElements('plants')">🌿 Plants</button>
+                </div>
+                <div id="elementLibrary" class="element-library"></div>
+            </div>
+            
+            <!-- AI Ideas Tab -->
+            <div id="aiTab" class="tab-content">
+                <div class="ai-prompt">
+                    <input type="text" id="aiPrompt" placeholder="Describe what you want... e.g., 'cozy mat', 'modern sofa'">
+                    <button id="generateIdeasBtn" class="btn-primary">Generate</button>
+                </div>
+                <div id="aiSuggestions" class="ai-suggestions"></div>
+            </div>
+            
+            <!-- Custom Tab -->
+            <div id="customTab" class="tab-content">
+                <select id="customCategory">
+                    <option value="furniture">🪑 Furniture</option>
+                    <option value="color">🎨 Color</option>
+                    <option value="lighting">💡 Lighting</option>
+                    <option value="decor">✨ Decor</option>
+                    <option value="plants">🌿 Plants</option>
+                </select>
+                <input type="text" id="customTitle" placeholder="Title (e.g., Velvet Sofa)">
+                <input type="color" id="customColor" value="#d4a373">
+                <input type="text" id="customImageUrl" placeholder="Image URL (paste any image link)">
+                <textarea id="customDescription" rows="2" placeholder="Description (optional)"></textarea>
+            </div>
+            
+            <div class="modal-buttons">
+                <button id="saveIdeaBtn" class="btn-primary">Add to Moodboard</button>
+                <button id="closeIdeaModal" class="btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Share Modal -->
+    <div id="shareModal" class="modal">
+        <div class="modal-content">
+            <h3>Share Moodboard</h3>
+            <p>Copy this link to share your moodboard:</p>
+            <input type="text" id="shareLink" readonly style="width: 100%; margin: 1rem 0;">
+            <div class="modal-buttons">
+                <button onclick="copyShareLink()" class="btn-primary">Copy Link</button>
+                <button onclick="closeModal('shareModal')" class="btn-secondary">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
